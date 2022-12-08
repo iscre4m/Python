@@ -71,11 +71,40 @@ def three_distincts() -> list:
 
     return [x, y, z]
 
+def write_file():
+    try:
+        file = open("first.txt", "w", encoding="utf-8")
+    except OSError as error:
+        print(error.strerror)
+    else:
+        file.write("First line\n")
+        file.write("Second line\n")
+        file.write("Third line")
+        file.flush()
+        file.close()
+
+def write_file_with():
+    try:
+        with open("first.txt", "w", encoding="utf-8") as file:
+            file.write("First line\n")
+            file.write("Second line\n")
+            file.write("Third line")
+    except OSError as error:
+        print(error.strerror)
 
 def main():
     # distincts()
-    print(three_distincts())
-
+    # print(three_distincts())
+    # first_lambda = lambda x : x ** x
+    # print(first_lambda(4))
+    try:
+        file = open("first.txt", mode = "r", encoding="utf-8")
+    except FileNotFoundError as error:
+        print(error.strerror)
+    else:
+        pass
+    # pass
 
 if __name__ == "__main__":
+    # write_file(); exit()
     main()
