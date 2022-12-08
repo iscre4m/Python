@@ -2,17 +2,17 @@ import json
 import re
 
 def convert_type(input):
-    if re.match("^[\"\']\w+[\"\']$", input):
-        return input[1:-1]
-    elif re.match("^0$|^[1-9]\d*$", input):
+    if re.match("^[\"\']\w+[\"\']$", input): # на входе строка по типу 'data' или "data"
+        return input[1:-1] # убираем кавычки
+    elif re.match("^0$|^[1-9]\d*$", input): # 0, 17, 23, ...
         return int(input)
-    elif re.match("^0?\.\d+|[1-9]\d*\.\d+$", input):
+    elif re.match("^0?\.\d+|[1-9]\d*\.\d+$", input): # 0.0023, .17, 12.7, ...
         return float(input)
-    elif re.match("^[Tt]rue$", input):
+    elif re.match("^[Tt]rue$", input): # true | True
         return True
-    elif re.match("^[Ff]alse$", input):
+    elif re.match("^[Ff]alse$", input): # false | False
         return False
-    elif input == "None":
+    elif re.match("^[Nn]one$"): # none | None
         return None
 
 def main():
