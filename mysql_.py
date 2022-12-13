@@ -16,6 +16,14 @@ def show_databases(cursor):
         print(row)
 
 
+def show_tables(cursor):
+    sql = "SHOW TABLES"
+    cursor.execute(sql)
+    print(cursor.column_names)
+    for row in cursor:
+        print(row)
+
+
 def main():
     try:
         connection = mysql.connector.connect(**connection_config)
@@ -24,7 +32,8 @@ def main():
     else:
         print("Connected")
     cursor = connection.cursor()
-    show_databases(cursor)
+    # show_databases(cursor)
+    show_tables(cursor)
 
 
 if __name__ == "__main__":
