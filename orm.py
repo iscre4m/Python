@@ -82,14 +82,5 @@ def main(db_config):
 
 
 if __name__ == "__main__":
-    db_config = {
-           "host" :          "localhost",
-           "port" :                 3306,
-       "database" :    "python_database",
-           "user" :     "python_db_user",
-       "password" :                "123",
-    "use_unicode" :                 True,
-        "charset" :            "utf8mb4",
-      "collation" : "utf8mb4_general_ci"
-    }
-    main(db_config)
+    import configs
+    main(configs.DB)
