@@ -1,16 +1,17 @@
 #!/usr/bin/python
 
-html = '''<!DOCTYPE html>
-<html>
-    <head>
-    <head/>
-    <body>
-        <h1>Hello World</h1>
-    <body/>
-<html/>
-'''
+import os
 
-print("Content-Type: text/html")
-print(f"Content-Length: {len(html)}")
+method = os.environ["REQUEST_METHOD"]
+script = os.environ["SCRIPT_FILENAME"]
+query = os.environ["QUERY_STRING"]
+params = dict()
+for param in query.split('&'):
+    param = param.split('=')
+    params[param[0]] = param[1]
+
+print("Content-Type: application/json")
 print()
-print(html)
+print(f"Method: {method}")
+print(f"Script: {script[script.rindex('/') + 1:]}")
+print(f"Query: {params}")

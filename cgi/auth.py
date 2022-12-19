@@ -29,7 +29,7 @@ content_length += len(str(headers)) + 1
 
 body = sys.stdin.read()
 
-content_length += len(body) + 1
+content_length += len(body)
 
 print("Connection: close")
 print(f"Content-Length: {content_length}")
