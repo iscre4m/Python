@@ -136,11 +136,40 @@ class UserDAO:
             print("User deleted")
             return True
         finally:
-            try:
-                cursor.close()
-            except:
-                pass
+            cursor.close()
         return False
+
+    def restore(self, user: User):
+        sql = '''
+            UPDATE `users` AS u 
+            SET u.`del_dt` = NULL 
+            WHERE u.`id` = %s
+        '''
+        try:
+            cursor = self.connection.cursor()
+            user.del_dt = None
+            cursor.execute(sql, [user.id])
+            self.connection.commit()
+        except mysql.connector.Error as error:
+            print(f"Restore failed: {error}")
+        else:
+            print("User restored")
+        finally:
+            cursor.close()
+
+    def is_username_free(self, username):
+        sql = '''
+            SELECT COUNT(*) FROM `users` AS u 
+            WHERE u.`username` = %s
+        '''
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(sql, [username])
+            return True if cursor.fetchone()[0] == 0 else False
+        except mysql.connector.Error as error:
+            print(f"Read error: {error}")
+        finally:
+            cursor.close()
 
 
 def main(db_config):
@@ -153,6 +182,10 @@ def main(db_config):
         print("Connected")
     
     user_dao = UserDAO(connection)
+    user = User()
+    user.id = "ce03af96-9a47-40b6-96ae-47fb5dad8c36"
+    # user_dao.delete(user)
+    print(user_dao.is_username_free("admin"))
 
 
 if __name__ == "__main__":
