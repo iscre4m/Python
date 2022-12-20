@@ -2,6 +2,12 @@
 
 import os
 import sys
+import base64
+
+cred="admin:123"
+cred_bytes = cred.encode('utf-8')
+code_bytes = base64.b64encode(cred_bytes)
+code_str = code_bytes.decode('ascii')
 
 content_length = 0
 
@@ -10,16 +16,14 @@ method = os.environ["REQUEST_METHOD"]
 content_length += len(method) + 1
 
 query = os.environ["QUERY_STRING"]
-
-content_length += len(query) + 1
-
-params = dict()
-for param in query.split('&'):
-    param = param.split('=')
-    params[param[0]] = param[1]
-
-content_length += len(str(params)) + 1
-
+if len(query) > 0:
+    content_length += len(query) + 1
+    params = dict()
+    for param in query.split('&'):
+        param = param.split('=')
+        params[param[0]] = param[1]
+    content_length += len(str(params)) + 1
+    
 headers = {}
 for k, v in os.environ.items():
     if k.startswith("HTTP_"):
@@ -42,7 +46,8 @@ print("Connection: close")
 print(f"Content-Length: {content_length}")
 print()
 print(method)
-print(query)
-print(params)
+if len(query) > 0:
+    print(query)
+    print(params)
 print(headers)
 print(body)
