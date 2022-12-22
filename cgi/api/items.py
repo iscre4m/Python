@@ -3,11 +3,11 @@
 import os
 import mysql.connector
 import configs
-from dao import UserDAO
 
 def send_401(message = None ):
     print("Status: 401 Unauthorized")
-    print("WWW-Authenticate: Bearer realm 'Authorization required'")
+    if message:
+        print("Content-Type: text/plain")
     print()
     if message:
         print(message)
@@ -32,14 +32,6 @@ except mysql.connector.Error as error:
     send_401(error)
     exit()
 
-user_dao = UserDAO(connection)
-user = user_dao.read(token)[0]
-
-if user is None:
-    send_401("Token rejected")
-    exit()
-
 print("Status: 200 OK")
 print("Content-Type: application/json;charset=UTF-8")
 print()
-print(f"'{user.username}'")

@@ -3,6 +3,24 @@ import random
 import hashlib
 import uuid
 import time
+from datetime import datetime, timedelta
+
+class AccessToken:
+    def __init__(self, row = None):
+        if row == None:
+            self.token   = None
+            self.expires = None
+            self.user_id = None
+        elif isinstance(row, dict):
+            self.token   = row["token"]
+            self.expires = row["expires"]
+            self.user_id = row["user_id"]
+        elif isinstance(row, list) or isinstance(row, tuple):
+            self.token = row[0]
+            self.expires = row[1]
+            self.user_id = row[2]
+        else:
+            raise ValueError("row type unsupported")
 
 class User:
     def __init__(self,  row = None):
@@ -31,7 +49,6 @@ class User:
 
     def __repr__(self):
         return str(self.__dict__)
-
 
 class UserDAO:
     def __init__(self, connection: mysql.connector.MySQLConnection):
@@ -168,5 +185,36 @@ class UserDAO:
             return True if cursor.fetchone()[0] == 0 else False
         except mysql.connector.Error as error:
             print(f"Read error: {error}")
+        finally:
+            cursor.close()
+
+class AccessTokenDAO:
+    def __init__(self, connection: mysql.connector.MySQLConnection):
+        self.connection = connection
+
+    def create(self, user: str | User):
+        if isinstance(user, User):
+            user_id = user.id
+        elif isinstance(user, str):
+            user_id = user
+        else:
+            return None
+
+        access_token = AccessToken()
+        access_token.token = random.randbytes(20).hex()
+        access_token.expires = (datetime.now() + timedelta(days = 1))\
+            .strftime('%Y-%m-%d %H:%M:%S')
+        access_token.user_id = user_id
+
+        sql = "INSERT INTO access_tokens(`token`,`expires`,`user_id`) "
+        sql += "VALUES(%(token)s, %(expires)s, %(user_id)s)"
+        try:
+            cursor = self.connection.cursor(dictionary = True)
+            cursor.execute(sql, access_token.__dict__)
+            self.connection.commit()
+        except mysql.connector.Error:
+            return None
+        else:
+            return access_token
         finally:
             cursor.close()

@@ -5,8 +5,8 @@ import os
 method = os.environ["REQUEST_METHOD"]
 script = os.environ["SCRIPT_FILENAME"]
 query = os.environ["QUERY_STRING"]
+params = dict()
 if len(query) > 0:
-    params = dict()
     for param in query.split('&'):
         param = param.split('=')
         params[param[0]] = param[1]

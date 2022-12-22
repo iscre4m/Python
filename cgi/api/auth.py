@@ -1,14 +1,16 @@
 #!/usr/bin/python
 
 import os
+import json
 import base64
 import mysql.connector
 import configs
-from dao import UserDAO
+from dao import UserDAO, AccessTokenDAO
 
 def send_401(message = None):
     print("Status: 401 Unauthorized")
-    print("WWW-Authenticate: Basic realm 'Authorization required'")
+    if message:
+        print("Content-Type: text/plain")
     print()
     if message:
         print(message)
@@ -51,13 +53,14 @@ if user is None:
     send_401("Credentials rejected")
     exit()
 
+access_token_dao = AccessTokenDAO(connection)
+access_token = access_token_dao.create(user)
+
+if not access_token:
+    send_401("Token creation error")
+    exit()
+
 print("Status: 200 OK")
 print("Content-Type: application/json;charset=UTF-8")
 print()
-print(f'''
-{{
-    "access_token": "{user.id}",
-    "token_type": "Bearer",
-    "expires_in": 3600
-}}
-''', end = "")
+print(json.dumps(access_token.__dict__, indent = 4))
