@@ -6,7 +6,7 @@ import base64
 
 content_length = 0
 
-cred="admin%:123"
+cred="admin:123"
 cred_bytes = cred.encode('utf-8')
 code_bytes = base64.b64encode(cred_bytes)
 code_str = code_bytes.decode('ascii')
