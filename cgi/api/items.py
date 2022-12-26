@@ -3,6 +3,7 @@
 import os
 import mysql.connector
 import configs
+from dao import AccessTokenDAO, UserDAO
 
 def send_401(message = None ):
     print("Status: 401 Unauthorized")
@@ -32,6 +33,14 @@ except mysql.connector.Error as error:
     send_401(error)
     exit()
 
+token = AccessTokenDAO(connection).read(token)
+if not token:
+    send_401("Token rejected")
+    exit()
+
+user = UserDAO(connection).read(token["user_id"])[0]
+
 print("Status: 200 OK")
 print("Content-Type: application/json;charset=UTF-8")
 print()
+print(f"Welcome, {user.username}")

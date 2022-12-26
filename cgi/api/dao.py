@@ -218,3 +218,35 @@ class AccessTokenDAO:
             return access_token
         finally:
             cursor.close()
+
+    def read(self, token = None):
+        sql = "SELECT * FROM `access_tokens`"
+        if token:
+            sql = " ".join([sql,"WHERE `token` = %s"])
+
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(sql, [token])
+        except mysql.connector.Error:
+            return None
+        else:
+            return tuple(AccessToken(row) for row in cursor)
+        finally:
+            cursor.close()
+
+    def read_by_user_id(self, user_id) -> AccessToken:
+        sql = "SELECT * FROM `access_tokens`"
+        sql = " ".join([sql,"WHERE `user_id` = %s"])
+
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(sql, [user_id])
+        except mysql.connector.Error:
+            return None
+        else:
+            try:
+                return tuple(AccessToken(row) for row in cursor)[0]
+            except:
+                return None
+        finally:
+            cursor.close()

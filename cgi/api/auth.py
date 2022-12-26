@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 import os
-import json
 import base64
 import mysql.connector
 import configs
+from datetime import datetime
 from dao import UserDAO, AccessTokenDAO
 
 def send_401(message = None):
@@ -46,15 +46,20 @@ except mysql.connector.Error as error:
     send_401(error)
     exit()
 
-user_dao = UserDAO(connection)
-user = user_dao.read_by_credentials(login, password)
+user = UserDAO(connection).read_by_credentials(login, password)
 
 if user is None:
     send_401("Credentials rejected")
     exit()
 
 access_token_dao = AccessTokenDAO(connection)
-access_token = access_token_dao.create(user)
+access_token = access_token_dao.read_by_user_id(user.id)
+if access_token:
+    token_expired = (access_token.expires - datetime.now()).seconds < 600
+    if token_expired:
+        access_token = access_token_dao.create(user)
+else:
+    access_token = access_token_dao.create(user)
 
 if not access_token:
     send_401("Token creation error")
@@ -63,4 +68,8 @@ if not access_token:
 print("Status: 200 OK")
 print("Content-Type: application/json;charset=UTF-8")
 print()
-print(json.dumps(access_token.__dict__, indent = 4))
+print(f"""{{
+    'token':'{access_token.token}',
+    'expires':'{access_token.expires}'
+    'user_id':'{access_token.user_id}'
+}}""")
