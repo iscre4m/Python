@@ -21,8 +21,9 @@ async def connect():
     try:
         return mysql.connector.connect(**configs.DB)
     except mysql.connector.Error as error:
-        send_401(error)
-        exit()
+        return error.msg
+    except asyncio.CancelledError:
+        return None
 
 
 async def main():
@@ -57,6 +58,15 @@ async def main():
     login, password = data.split(':', maxsplit = 1)
 
     connection = await db_connect
+
+    if connection == None:
+        send_401("Failed to connect to database")
+        exit()
+
+    if isinstance(connection, str):
+        send_401(connection)
+        exit()    
+
     user = UserDAO(connection).read_by_credentials(login, password)
 
     if user is None:
