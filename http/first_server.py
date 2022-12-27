@@ -5,15 +5,16 @@ import os
 class MainHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         print(f"GET {self.path}")
-        path_parts = self.path.split("/")
-        if path_parts[1] == "":
-            path_parts[1] = "index.html"
-        filename = "./http/" + path_parts[1]
+        filename = "./http/"
+        if self.path == "/":
+            filename = "".join([filename, "index.html"])
+        else:
+            filename = "".join([filename, self.path[self.path.index("/") + 1:]])
         if os.path.isfile(filename):
             self.flush_file(filename)
             return
 
-        if path_parts[1] == "auth":
+        if self.path == "/auth":
             self.auth()
         else:
             self.send_response(200)
@@ -77,6 +78,10 @@ class MainHandler(BaseHTTPRequestHandler):
             content_type = "image/x-icon"
         elif extension in ("html", "htm"):
             content_type = "text/html"
+        elif extension == "js":
+            content_type = "application/javascript"
+        elif extension == "css":
+            content_type = "text/css"
         else:
             content_type = "application/octet-stream"
         self.send_response(200)
