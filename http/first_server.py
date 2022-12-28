@@ -10,6 +10,7 @@ class MainHandler(BaseHTTPRequestHandler):
             filename = "".join([filename, "index.html"])
         else:
             filename = "".join([filename, self.path[self.path.index("/") + 1:]])
+            
         if os.path.isfile(filename):
             self.flush_file(filename)
             return
@@ -93,6 +94,7 @@ class MainHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code = ..., size = ...):
         return
+
 
 def main():
     http_server = HTTPServer(("127.0.0.1", 88), MainHandler)
