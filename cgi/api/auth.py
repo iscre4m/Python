@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import json
 import os
 import base64
 import mysql.connector
@@ -89,11 +90,7 @@ async def main():
     print("Status: 200 OK")
     print("Content-Type: application/json;charset=UTF-8")
     print()
-    print(f"""{{
-        'token':'{access_token.token}',
-        'expires':'{access_token.expires}'
-        'user_id':'{access_token.user_id}'
-    }}""")
+    print(json.dumps(access_token.__dict__, indent = 4, default = str))
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,11 +1,14 @@
 import base64
+from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
 import os
 import mysql.connector
 import sys
 sys.path.append("./cgi/api")
 import configs
 import dao
+
 
 class DatabaseService:
     __connection = None
@@ -56,18 +59,16 @@ class MainHandler(BaseHTTPRequestHandler):
             filename = "".join([filename, "index.html"])
         else:
             filename = "".join([filename, self.path[self.path.index("/") + 1:]])
-            
         if os.path.isfile(filename):
             self.flush_file(filename)
             return
 
         if self.path == "/auth":
             self.auth()
+        elif self.path == "/items":
+            self.items()
         else:
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html")
-            self.end_headers()
-            self.wfile.write("<h1>404</h1>".encode())
+            self.send_404()
         return
 
     def auth(self):
@@ -101,9 +102,47 @@ class MainHandler(BaseHTTPRequestHandler):
             self.send_401("Credentials rejected")
             return
 
-        self.send_200(user.id)
+        access_token_dao = dao_service.get_access_token_dao()
+        access_token = access_token_dao.read_by_user_id(user.id)
+        if access_token:
+            token_expired = (access_token.expires - datetime.now()).seconds < 600
+            if token_expired:
+                access_token = access_token_dao.create(user)
+        else:
+            access_token = access_token_dao.create(user)
+
+        if not access_token:
+            self.send_401("Token creation error")
+            return
+
+        self.send_200(
+            json.dumps(access_token.__dict__, indent = 4, default = str),
+            type = "json"
+        )
         return
 
+    def items(self):
+        auth_header = self.headers.get("Authorization")
+        if auth_header is None:
+            self.send_401("Authorization header required")
+            return
+
+        if auth_header.startswith('Bearer'):
+            token = auth_header[7:]
+        else:
+            self.send_401("Authorization scheme Bearer required")
+            return
+
+        access_token_dao = dao_service.get_access_token_dao()
+
+        token = access_token_dao.read(token)
+        if not token:
+            self.send_401("Token rejected")
+            return
+
+        self.send_200()
+        return
+    
     def send_401(self, message = None):
         self.send_response(401, "Unauthorized")
         if message:
@@ -124,6 +163,12 @@ class MainHandler(BaseHTTPRequestHandler):
         if message:
             self.wfile.write(message.encode())
         return
+
+    def send_404(self):
+        self.send_response(404)
+        self.send_header("Content-Type", "text/html")
+        self.end_headers()
+        self.wfile.write("<h1>404</h1>".encode())
 
     EXTENSION_TO_TYPE = {
         "ico": "image/x-icon",

@@ -41,9 +41,9 @@ const authButtonClick = () => {
 				r.text().then(text => (output.innerText = text));
 				break;
 			case 200:
-				r.text().then(json => {
-					output.innerText = json;
-					// window.sessionStorage.setItem('access_token', json.token);
+				r.json().then(json => {
+					output.innerText = json.token;
+					window.sessionStorage.setItem('access_token', json.token);
 				});
 				break;
 		}
