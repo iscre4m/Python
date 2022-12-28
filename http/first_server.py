@@ -1,6 +1,52 @@
 import base64
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
+import mysql.connector
+import sys
+sys.path.append("./cgi/api")
+import configs
+import dao
+
+class DatabaseService:
+    __connection = None
+    def get_connection(self) -> mysql.connector.MySQLConnection:
+        if DatabaseService.__connection\
+        or DatabaseService.__connection\
+        and DatabaseService.__connection.is_connected():
+            return DatabaseService.__connection
+
+        try:
+            DatabaseService.__connection = mysql.connector.connect(**configs.DB)
+        except mysql.connector.Error as error:
+            print(error.msg)
+            DatabaseService.__connection = None
+        return DatabaseService.__connection
+
+class DAOService:
+    __user_dao: dao.UserDAO = None
+    __access_token_dao: dao.AccessTokenDAO = None
+    __database_service: DatabaseService = None
+
+    def __init__(self, database_service):
+        DAOService.__database_service = database_service
+
+    def get_user_dao(self) -> dao.UserDAO:
+        if DAOService.__user_dao:
+            return DAOService.__user_dao
+        DAOService.__user_dao = dao.UserDAO(
+            DAOService.__database_service.get_connection()
+        )
+        return DAOService.__user_dao
+
+    def get_access_token_dao(self) -> dao.AccessTokenDAO:
+        if DAOService.__access_token_dao:
+            return DAOService.__access_token_dao
+        DAOService.__access_token_dao = dao.AccessTokenDAO(
+            DAOService.__database_service.get_connection()
+        )
+        return DAOService.__access_token_dao
+
+dao_service: DAOService = None
 
 class MainHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -49,7 +95,13 @@ class MainHandler(BaseHTTPRequestHandler):
 
         login, password = data.split(':', maxsplit = 1)
 
-        self.send_200(login + password)
+        user_dao = dao_service.get_user_dao()
+        user = user_dao.read_by_credentials(login, password)
+        if user is None:
+            self.send_401("Credentials rejected")
+            return
+
+        self.send_200(user.id)
         return
 
     def send_401(self, message = None):
@@ -73,17 +125,19 @@ class MainHandler(BaseHTTPRequestHandler):
             self.wfile.write(message.encode())
         return
 
+    EXTENSION_TO_TYPE = {
+        "ico": "image/x-icon",
+        "html": "text/html",
+        "htm": "text/html",
+        "js": "application/javascript",
+        "css": "text/css"
+        }
+
     def flush_file(self, filename: str):
         extension = filename[filename.rindex(".") + 1:]
-        if extension == "ico":
-            content_type = "image/x-icon"
-        elif extension in ("html", "htm"):
-            content_type = "text/html"
-        elif extension == "js":
-            content_type = "application/javascript"
-        elif extension == "css":
-            content_type = "text/css"
-        else:
+        try:
+            content_type = self.EXTENSION_TO_TYPE[extension]
+        except:
             content_type = "application/octet-stream"
         self.send_response(200)
         self.send_header("Content-Type", content_type)
@@ -97,9 +151,11 @@ class MainHandler(BaseHTTPRequestHandler):
 
 
 def main():
+    global dao_service
     http_server = HTTPServer(("127.0.0.1", 88), MainHandler)
     try:
         print("Server started")
+        dao_service = DAOService(DatabaseService())
         http_server.serve_forever()
     except:
         print("Server stopped")
