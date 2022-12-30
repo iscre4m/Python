@@ -64,9 +64,9 @@ const itemsButtonClick = () => {
 		}
 	}).then(r => {
 		if (r.status != 200) {
-			output.innerText = 'Content is blocked';
+			r.text().then(t => (output.innerText = t));
 		} else {
-			output.innerText = 'Content will be here';
+			r.text().then(t => (output.innerHTML = t));
 		}
 	});
 };

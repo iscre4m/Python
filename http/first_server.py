@@ -9,7 +9,6 @@ sys.path.append("./cgi/api")
 import configs
 import dao
 
-
 class DatabaseService:
     __connection = None
     def get_connection(self) -> mysql.connector.MySQLConnection:
@@ -140,7 +139,13 @@ class MainHandler(BaseHTTPRequestHandler):
             self.send_401("Token rejected")
             return
 
-        self.send_200()
+        user_list = "<ul>"
+        user_dao = dao_service.get_user_dao()
+        for user in user_dao.read():
+            user_list += f"<li>{user.username} - {user.email}</li>"
+        user_list += "</ul>"
+
+        self.send_200(user_list, "html")
         return
     
     def send_401(self, message = None):
@@ -156,8 +161,11 @@ class MainHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         if type == "json":
             content_type = "application/json"
+        elif type == "html":
+            content_type = "text/html"
         else:
             content_type = "text/plain"
+
         self.send_header("Content-Type", f"{content_type}; charset=UTF-8")
         self.end_headers()
         if message:
